@@ -15,8 +15,8 @@ public class JsonResult {
     /**
      * 参照Unix命令行返回值 0代表成功，大于0代表不同的错误
      */
-    private static final int DEFAULT_STATUS_SUCCESS = 0;
-    private static final int DEFAULT_STATUS_FAIL = 1;
+    private static final int DEFAULT_STATUS_SUCCESS = CodeType.SUCCESS_STATUS.getCode();
+    private static final int DEFAULT_STATUS_FAIL = CodeType.SERVER_EXCEPTION.getCode();
 
     private static final String DEFAULT_STATUS_KEY = "status";
     private static final String DEFAULT_MESSAGE_KEY = "message";

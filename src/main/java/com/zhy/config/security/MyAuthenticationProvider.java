@@ -53,6 +53,7 @@ public class MyAuthenticationProvider implements AuthenticationProvider {
             if(trueAuthCode == null || !trueAuthCode.equals(authCode)){
                 throw new BadCredentialsException(CodeType.AUTH_CODE_ERROR.getMessage());
             }
+            redisService.removeMsgCode(phone);
         } else {
             //账号登录
             if (userInfo == null) {

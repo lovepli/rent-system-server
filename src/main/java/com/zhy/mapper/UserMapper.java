@@ -19,6 +19,23 @@ public interface UserMapper {
     @Insert("insert into user(phone, username, password, roles) values(#{phone}, #{username}, #{password}, #{roles})")
     int save(User user);
 
+    @Update("update user set real_name=#{realName},id_number=#{idNumber} where phone=#{phone}")
+    void updateCertInfo(String realName, String idNumber, String phone);
+
+    @Update("update user set phone=#{newPhone} where phone=#{oldPhone}")
+    void updatePhoneByOldPhone(String newPhone, String oldPhone);
+
+    @Update("update user set password=#{password} where phone=#{phone}")
+    void updatePassword(String password, String phone);
+
+    @Update("update user set username=#{username},email=#{email} where phone=#{phone}")
+    void updateUserInfo(String username, String email, String phone);
+
     @Select("select * from user where phone=#{phone}")
+    @Results({@Result(property = "realName", column = "real_name"),
+            @Result(property = "headPortrait", column = "head_portrait"),
+            @Result(property = "idNumber", column = "id_number")
+            })
     User findUserByPhone(String phone);
+
 }

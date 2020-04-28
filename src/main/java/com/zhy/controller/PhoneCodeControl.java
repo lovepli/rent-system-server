@@ -7,6 +7,7 @@ import com.aliyuncs.exceptions.ClientException;
 import com.aliyuncs.profile.DefaultProfile;
 import com.aliyuncs.profile.IClientProfile;
 import com.zhy.component.PhoneRandomBuilder;
+import com.zhy.constant.CodeType;
 import com.zhy.service.RedisService;
 import com.zhy.utils.JsonResult;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +27,7 @@ import java.util.HashMap;
  */
 @RestController
 @Slf4j
-public class GetPhoneCodeControl {
+public class PhoneCodeControl {
 
     @Autowired
     RedisService redisService;
@@ -53,15 +54,16 @@ public class GetPhoneCodeControl {
     @PostMapping(value = "/getAuthCode", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public String getAuthCode(@RequestBody HashMap hashMap){
 
-        String phone = (String) hashMap.get("phone");
+        try {
+            String phone = (String) hashMap.get("phone");
 
-        String trueMsgCode = PhoneRandomBuilder.randomBuilder();
-        System.out.println(trueMsgCode);
+            String trueMsgCode = PhoneRandomBuilder.randomBuilder();
+            System.out.println(trueMsgCode);
 
-       //在redis中保存手机号验证码并设置过期时间
-        redisService.saveMsgCode(phone, trueMsgCode);
+            //在redis中保存手机号验证码并设置过期时间
+            redisService.saveMsgCode(phone, trueMsgCode);
 
-        String msgCode = "SMS_136394413";
+            String msgCode = "SMS_136394413";
 
 //        try {
 //            sendSmsResponse(phone, trueMsgCode, msgCode);
@@ -70,7 +72,25 @@ public class GetPhoneCodeControl {
 //            return JsonResult.fail().toJSON();
 //        }
 
-        return JsonResult.success().toJSON();
+            return JsonResult.success().toJSON();
+        } catch (Exception e){
+            log.error("User send phone message exception", e);
+        }
+        return JsonResult.fail(CodeType.SERVER_EXCEPTION).toJSON();
+    }
+
+    @PostMapping("/checkAuthCode")
+    public String checkAuthCode(@RequestBody HashMap hashMap){
+        String phone = (String) hashMap.get("phone");
+        String authCode = (String) hashMap.get("authCode");
+
+        String trueMsgCode = redisService.getMsgCode(phone);
+
+        if(trueMsgCode != null && trueMsgCode.equals(authCode)) {
+            redisService.removeMsgCode(phone);
+            return JsonResult.success().toJSON();
+        }
+        return JsonResult.fail(CodeType.AUTH_CODE_ERROR).toJSON();
     }
 
     private void sendSmsResponse(String phoneNumber, String code, String msgCode) throws ClientException {

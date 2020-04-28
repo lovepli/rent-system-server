@@ -49,6 +49,21 @@ public class User implements UserDetails,Serializable {
      */
     private String email;
 
+    /**
+     * 真实姓名
+     */
+    private String realName;
+
+    /**
+     * 证件号码
+     */
+    private String idNumber;
+
+    /**
+     * 头像
+     */
+    private String headPortrait;
+
     //用户权限
     private String roles;
 
@@ -88,10 +103,11 @@ public class User implements UserDetails,Serializable {
         return true;
     }
 
-    public User(String phone, String username, String password, String roles) {
+    public User(String phone, String username, String password, String roles, String headPortrait) {
         this.phone = phone;
         this.username = username;
         this.password = password;
         this.roles = roles;
+        this.headPortrait = headPortrait;
     }
 }

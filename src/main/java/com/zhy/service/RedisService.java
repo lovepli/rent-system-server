@@ -25,4 +25,10 @@ public class RedisService {
         return (String) stringRedisServiceImpl.get(phone);
     }
 
+    //移除短信验证码
+    public void removeMsgCode(String phone){
+        stringRedisServiceImpl.remove(phone);
+    }
+
+
 }

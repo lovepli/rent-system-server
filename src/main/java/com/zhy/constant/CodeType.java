@@ -11,6 +11,7 @@ public enum CodeType {
      * 状态码
      */
     SUCCESS_STATUS(0, "成功"),
+    SERVER_EXCEPTION(1, "服务器异常"),
 
     FORBIDDEN_OPERATION(100, "权限不足"),
     LOGIN_SUCCESS(101, "登录成功"),
@@ -22,6 +23,9 @@ public enum CodeType {
     AUTH_CODE_ERROR(107, "验证码错误"),
     PASSWORD_ERROR(108, "密码错误"),
     USER_NOT_LOGIN(109, "用户未登录"),
+    UPDATE_CERT_SUCCESS(110, "修改证件信息成功"),
+    CHANGE_PASSWORD_SUCCESS(111, "修改密码成功"),
+    CHANGE_USER_INFO_SUCCESS(112, "更新用户信息成功"),
     ;
 
     private int code;
