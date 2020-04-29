@@ -4,7 +4,9 @@ import com.zhy.aspect.annotation.PermissionCheck;
 import com.zhy.model.User;
 import com.zhy.service.UserService;
 import com.zhy.utils.DataMap;
+import com.zhy.utils.FileUtil;
 import com.zhy.utils.JsonResult;
+import com.zhy.utils.TimeUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.File;
 import java.security.Principal;
 import java.util.HashMap;
 
@@ -30,8 +33,11 @@ public class UserControl {
     @GetMapping("/getUserLoginInfo")
     @PermissionCheck(value = "ROLE_USER")
     public String getUserLoginInfo(@AuthenticationPrincipal Principal principal){
-        String username = principal.getName();
-        return JsonResult.success().data(username).toJSON();
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String phone = user.getPhone();
+
+        DataMap dataMap = userService.findUsernameByPhone(phone);
+        return JsonResult.build(dataMap).toJSON();
     }
 
     @PostMapping("/registerUser")
@@ -92,7 +98,21 @@ public class UserControl {
     @PostMapping("/updateHeadPortrait")
     @PermissionCheck(value = "ROLE_USER")
     public String updateHeadPortrait(@RequestParam("headPortraitImg") MultipartFile file){
-        return "success";
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String phone = user.getPhone();
+
+        DataMap dataMap = userService.updateHeadPortrait(file, phone);
+        return JsonResult.build(dataMap).toJSON();
+    }
+
+    @PostMapping("/updateRoomPic")
+    @PermissionCheck(value = "ROLE_USER")
+    public String updateRoomPic(@RequestParam("file") MultipartFile file){
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String phone = user.getPhone();
+
+        DataMap dataMap = userService.updateRoomPic(file, phone);
+        return JsonResult.build(dataMap).toJSON();
     }
 
 }

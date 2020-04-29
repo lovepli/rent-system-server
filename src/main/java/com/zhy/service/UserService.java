@@ -5,6 +5,7 @@ import com.zhy.constant.RoleConstant;
 import com.zhy.mapper.UserMapper;
 import com.zhy.model.User;
 import com.zhy.utils.DataMap;
+import com.zhy.utils.FileUtil;
 import com.zhy.utils.MD5Util;
 import com.zhy.utils.TimeUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,8 +14,10 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import sun.security.krb5.internal.PAData;
 
+import java.io.File;
 import java.util.HashMap;
 
 /**
@@ -41,6 +44,11 @@ public class UserService implements UserDetailsService {
             throw new UsernameNotFoundException("用户不存在");
         }
         return user;
+    }
+
+    public DataMap findUsernameByPhone(String phone){
+        String username = userMapper.findUsernameByPhone(phone);
+        return DataMap.success().setData(username);
     }
 
     public DataMap registerUser(HashMap hashMap) {
@@ -124,6 +132,32 @@ public class UserService implements UserDetailsService {
         userMapper.updateUserInfo(username, email, phone);
 
         return DataMap.success(CodeType.CHANGE_USER_INFO_SUCCESS);
+    }
+
+    public DataMap updateHeadPortrait(MultipartFile file, String phone) {
+        String picUrl = updatePicToOss(file, "avatar/"+phone);
+
+        userMapper.updateHeadPortrait(picUrl, phone);
+        return DataMap.success().setData(picUrl);
+    }
+
+    public DataMap updateRoomPic(MultipartFile file, String phone){
+        String picUrl = updatePicToOss(file, "rooms/"+phone);
+        return DataMap.success().setData(picUrl);
+    }
+
+    private String updatePicToOss(MultipartFile file, String subCatalog) {
+        String filePath = this.getClass().getResource("/").getPath().substring(1) + "";
+
+        //获得文件扩展名
+        String fileContentType = file.getContentType();
+        String fileExtension = fileContentType.substring(fileContentType.indexOf("/") + 1);
+        String fileName = new TimeUtil().getLongTime()+"."+fileExtension;
+
+        FileUtil fileUtil = new FileUtil();
+        File headPortrait = fileUtil.multipartFileToFile(file, filePath, fileName);
+        String picUrl = fileUtil.uploadFile(headPortrait, subCatalog);
+        return picUrl;
     }
 
 }

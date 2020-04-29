@@ -28,6 +28,9 @@ public interface UserMapper {
     @Update("update user set password=#{password} where phone=#{phone}")
     void updatePassword(String password, String phone);
 
+    @Update("update user set head_portrait=#{headPortrait} where phone=#{phone}")
+    void updateHeadPortrait(String headPortrait, String phone);
+
     @Update("update user set username=#{username},email=#{email} where phone=#{phone}")
     void updateUserInfo(String username, String email, String phone);
 
@@ -37,5 +40,8 @@ public interface UserMapper {
             @Result(property = "idNumber", column = "id_number")
             })
     User findUserByPhone(String phone);
+
+    @Select("select username from user where phone=#{phone}")
+    String findUsernameByPhone(String phone);
 
 }
