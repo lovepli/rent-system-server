@@ -44,4 +44,6 @@ public interface UserMapper {
     @Select("select username from user where phone=#{phone}")
     String findUsernameByPhone(String phone);
 
+    @Select("select id from user where phone=#{phone}")
+    int findIdByPhone(String phone);
 }
