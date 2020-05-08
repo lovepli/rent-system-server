@@ -1,6 +1,8 @@
 package com.zhy.service;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.TypeReference;
 import com.zhy.mapper.CommunityMapper;
 import com.zhy.mapper.HouseResourceMapper;
 import com.zhy.mapper.LandlordMapper;
@@ -12,10 +14,12 @@ import com.zhy.utils.DataMap;
 import com.zhy.utils.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author: zhangocean
@@ -48,11 +52,23 @@ public class SpaceService {
         String phone = (String) hashMap.get("phone");
         String houseCity = (String) hashMap.get("houseCity");
         String communityName = (String) hashMap.get("communityName");
-        Integer buildingAge = Integer.parseInt(hashMap.get("buildingAge").toString());
+        Integer buildingAge = 0;
+        if(!hashMap.get("buildingAge").equals(StringUtil.BLANK)){
+            buildingAge = Integer.parseInt(hashMap.get("buildingAge").toString());
+        }
         String buildingType = (String) hashMap.get("buildingType");
-        Integer heatingMethod = Integer.parseInt(hashMap.get("heatingMethod").toString());
-        Double greeningRate = Double.parseDouble(hashMap.get("greeningRate").toString());
-        Double plotRatio = Double.parseDouble(hashMap.get("plotRatio").toString());
+        Integer heatingMethod = 0;
+        if(!hashMap.get("heatingMethod").equals(StringUtil.BLANK)){
+            heatingMethod = Integer.parseInt(hashMap.get("heatingMethod").toString());
+        }
+        Double greeningRate = 0.0;
+        if(!hashMap.get("greeningRate").equals(StringUtil.BLANK)){
+            greeningRate = Double.parseDouble(hashMap.get("greeningRate").toString());
+        }
+        Double plotRatio = 0.0;
+        if(!hashMap.get("plotRatio").equals(StringUtil.BLANK)){
+            plotRatio = Double.parseDouble(hashMap.get("plotRatio").toString());
+        }
         String propertyCompany = (String) hashMap.get("propertyCompany");
         String propertyPhone = (String) hashMap.get("propertyPhone");
 
@@ -61,20 +77,21 @@ public class SpaceService {
 
         //保存小区
         int isExistCommunity = communityMapper.findIsExistByCommunityNameAndHouseCity(communityName, houseCity);
-        System.out.println(isExistCommunity);
 
         if(isExistCommunity == 0){
-            isExistCommunity = communityMapper.save(community);
+            communityMapper.save(community);
+        } else {
+            community.setId(isExistCommunity);
         }
 
         //保存房东信息
         int landlordId = landlordMapper.findIsExistByPhone(phone);
         if(landlordId == 0){
-            landlord.setCommunity(isExistCommunity+"");
+            landlord.setCommunity(community.getId()+"");
             landlordMapper.save(landlord);
         } else {
             String landlordCommunity = landlordMapper.findCommunityByPhone(phone);
-            landlord.setCommunity(landlordCommunity + "," + isExistCommunity);
+            landlord.setCommunity(landlordCommunity + "," + community.getId());
             landlordMapper.updateLandlordByPhone(landlord.getCommunity(), phone);
         }
 
@@ -109,42 +126,57 @@ public class SpaceService {
         houseResource.setAreaTag(areaTag);
         houseResource.setFacility(facility);
         houseResource.setRoomPic(roomPic.toString());
+        String communityIdStr = landlordMapper.findCommunityById(landlordId);
+        houseResource.setHouseCity(communityMapper.findHouseCityById(Integer.parseInt(communityIdStr)));
 
-        int houseId = houseResourceMapper.save(houseResource);
+        houseResourceMapper.save(houseResource);
 
-        System.out.println(houseId);
-        HouseResource house = new HouseResource();
-        house.setId(houseId);
-        house.setHouseName(areaTag.replace(",", " ") + " " + houseResource.getHouseName());
-        house.setRent(houseResource.getRent());
-        house.setToward(houseResource.getToward());
-        house.setFloor(houseResource.getFloor());
-        house.setLift(houseResource.getLift());
+        HashMap<String, Object> houseMap = new HashMap<>();
+        houseMap.put("id", houseResource.getId());
+        houseMap.put("houseName", areaTag.replace(",", " ") + " " + houseResource.getHouseName());
+        houseMap.put("rent", houseResource.getRent());
+        houseMap.put("toward", houseResource.getToward());
+        houseMap.put("floor", houseResource.getFloor());
+        if(houseResource.getLift() == 0){
+            houseMap.put("lift", "无");
+        } else {
+            houseMap.put("lift", "有");
+        }
+        houseMap.put("rentState", "未出租");
 
-        return DataMap.success().setData(house);
+        return DataMap.success().setData(houseMap);
     }
 
     public DataMap getHouseResourceInfo(String phone){
         int landlordId = userMapper.findIdByPhone(phone);
 
         List<HouseResource> houseResources = houseResourceMapper.findHouseResourcesByLandlordId(landlordId);
-        HouseResource houseResource;
-        List<HouseResource> dataList = new ArrayList<>();
+        HashMap<String, Object> houseMap;
+        List<HashMap<String, Object>> dataList = new ArrayList<>();
         for(HouseResource h : houseResources){
-            houseResource = new HouseResource();
+            houseMap = new HashMap<>();
             List<String> areaTags = StringUtil.StringToList(h.getAreaTag());
             StringBuilder houseName = new StringBuilder();
             for(String s : areaTags){
                 houseName.append(s).append(" ");
             }
             houseName.append(h.getHouseName());
-            houseResource.setId(h.getId());
-            houseResource.setHouseName(houseName.toString());
-            houseResource.setRent(h.getRent());
-            houseResource.setToward(h.getToward());
-            houseResource.setFloor(h.getFloor());
-            houseResource.setLift(h.getLift());
-            dataList.add(houseResource);
+            houseMap.put("id", h.getId());
+            houseMap.put("houseName", houseName.toString());
+            houseMap.put("rent", h.getRent());
+            houseMap.put("toward", h.getToward());
+            houseMap.put("floor", h.getFloor());
+            if(h.getLift() == 0){
+                houseMap.put("lift", "无");
+            } else {
+                houseMap.put("lift", "有");
+            }
+            if(h.getRentState() == 0){
+                houseMap.put("rentState", "未出租");
+            } else {
+                houseMap.put("rentState", "已出租");
+            }
+            dataList.add(houseMap);
         }
 
         return DataMap.success().setData(dataList);

@@ -85,6 +85,7 @@ public class UserService implements UserDetailsService {
         userData.setUsername(user.getUsername());
         userData.setRealName(user.getRealName());
         userData.setIdNumber(user.getIdNumber());
+        userData.setGender(user.getGender());
         return DataMap.success().setData(userData);
     }
 
@@ -129,7 +130,8 @@ public class UserService implements UserDetailsService {
     public DataMap saveUserInfo(HashMap hashMap, String phone){
         String username = (String) hashMap.get("username");
         String email = (String) hashMap.get("email");
-        userMapper.updateUserInfo(username, email, phone);
+        String gender = (String) hashMap.get("gender");
+        userMapper.updateUserInfo(username, email, phone, gender);
 
         return DataMap.success(CodeType.CHANGE_USER_INFO_SUCCESS);
     }

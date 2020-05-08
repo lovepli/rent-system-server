@@ -30,7 +30,7 @@ public class HouseResource {
 
     private String floor;
 
-    private String lift;
+    private int lift;
 
     private int era;
 
@@ -41,4 +41,8 @@ public class HouseResource {
     private String facility;
 
     private String roomPic;
+
+    private int rentState = 0;
+
+    private String houseCity;
 }

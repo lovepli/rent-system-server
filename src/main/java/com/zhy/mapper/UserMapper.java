@@ -31,11 +31,12 @@ public interface UserMapper {
     @Update("update user set head_portrait=#{headPortrait} where phone=#{phone}")
     void updateHeadPortrait(String headPortrait, String phone);
 
-    @Update("update user set username=#{username},email=#{email} where phone=#{phone}")
-    void updateUserInfo(String username, String email, String phone);
+    @Update("update user set username=#{username},email=#{email},gender=#{gender} where phone=#{phone}")
+    void updateUserInfo(String username, String email, String phone, String gender);
 
     @Select("select * from user where phone=#{phone}")
-    @Results({@Result(property = "realName", column = "real_name"),
+    @Results(id = "userMap", value = {
+            @Result(property = "realName", column = "real_name"),
             @Result(property = "headPortrait", column = "head_portrait"),
             @Result(property = "idNumber", column = "id_number")
             })

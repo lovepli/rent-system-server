@@ -31,4 +31,7 @@ public interface LandlordMapper {
     @Results({@Result(property = "houseCity", column = "house_city")
     })
     List<Landlord> findLandlordByPhone(@Param("phone") String phone);
+
+    @Select("select community from landlord where id=#{id}")
+    String findCommunityById(int id);
 }

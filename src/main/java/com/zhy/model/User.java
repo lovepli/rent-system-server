@@ -50,6 +50,11 @@ public class User implements UserDetails,Serializable {
     private String email;
 
     /**
+     * 性别
+     */
+    private int gender;
+
+    /**
      * 真实姓名
      */
     private String realName;
