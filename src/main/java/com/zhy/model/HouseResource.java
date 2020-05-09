@@ -45,4 +45,8 @@ public class HouseResource {
     private int rentState = 0;
 
     private String houseCity;
+
+    private String houseBrief;
+
+    private String subway = "";
 }

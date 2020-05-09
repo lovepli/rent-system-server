@@ -9,15 +9,14 @@ import com.zhy.mapper.LandlordMapper;
 import com.zhy.model.Community;
 import com.zhy.model.HouseResource;
 import com.zhy.utils.DataMap;
+import com.zhy.utils.SortUtil;
 import com.zhy.utils.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.lang.reflect.Type;
+import java.util.*;
 
 /**
  * @author: zhangocean
@@ -26,6 +25,11 @@ import java.util.Map;
  */
 @Service
 public class RoomService {
+
+    private final static String UN_LIMITED = "不限";
+    private final static String ENTIRE_TENANCY = "整租";
+    private final static String HAS_LIFT = "有电梯";
+    private final static String NEAR_SUBWAY = "离地铁近";
 
     @Autowired
     private CommunityMapper communityMapper;
@@ -128,21 +132,38 @@ public class RoomService {
 
     public DataMap getRoomInfoByCityAndSort(HashMap hashMap){
 
-        String city = (String) hashMap.get("city");
         String sort = (String) hashMap.get("sort");
         String rank = (String) hashMap.get("rank");
-        if("priceSort".equals(sort)) {
-            sort = "rent";
-        } else if ("areaSort".equals(sort)){
-            sort = "build_area";
-        } else {
+        if(!"priceSort".equals(sort) && !"areaSort".equals(sort)) {
             sort = "id";
             rank = "desc";
         }
-        List<HouseResource> resources = houseResourceMapper.findHouseResourcesByCityAndRentStateAndSort(city, 0, sort, rank);
+//        List<HouseResource> resources = houseResourceMapper.findHouseResourcesByCityAndRentStateAndSort(city, 0, sort, rank);
 
-        List<HouseResource> retData = handleHouseResource(resources);
+        List<HouseResource> retData = getRoomInfoByCondition(hashMap);
 
+        retData = SortUtil.sortHouseResource(sort, rank, retData);
+
+        return DataMap.success().setData(retData);
+    }
+
+    public DataMap startLookingHouse(String searchText, String city){
+
+        List<HouseResource> houseResources = houseResourceMapper.findLikeAreaTagBySearchTextAndCity(searchText, 0, city);
+
+        Set<HouseResource> houseResourceSet = new HashSet<>(houseResources);
+
+        houseResources = houseResourceMapper.findLikeSubwayBySearchTextAndCity(searchText, 0, city);
+        houseResourceSet.addAll(houseResources);
+
+        List<HouseResource> retData = handleHouseResource(new ArrayList<>(houseResourceSet));
+
+        return DataMap.success().setData(retData);
+    }
+
+    public DataMap searchRoomByCondition(HashMap hashMap) {
+
+        List<HouseResource> retData = getRoomInfoByCondition(hashMap);
         return DataMap.success().setData(retData);
     }
 
@@ -169,4 +190,98 @@ public class RoomService {
         return retData;
     }
 
+    private List<HouseResource> getRoomInfoByCondition(HashMap hashMap){
+        String city = (String) hashMap.get("city");
+        String area = (String) hashMap.get("area");
+        String subway = (String) hashMap.get("subway");
+        String areaStand = (String) hashMap.get("areaStand");
+        String subwayStand = (String) hashMap.get("subwayStand");
+        String rent = (String) hashMap.get("rent");
+        String doorModel = (String) hashMap.get("doorModel");
+        String roomType = (String) hashMap.get("roomType");
+        String feature = (String) hashMap.get("feature");
+
+        //没有搜索条件时
+        if (area.equals(UN_LIMITED) &&
+                subway.equals(UN_LIMITED) &&
+                rent.equals(UN_LIMITED) &&
+                doorModel.equals(UN_LIMITED) &&
+                roomType.equals(UN_LIMITED) &&
+                feature.equals(UN_LIMITED)){
+            List<HouseResource> resources = houseResourceMapper.findHouseResourcesByCityAndRentStateAndSort(city, 0, "id", "desc");
+            return handleHouseResource(resources);
+        }
+
+        List<HouseResource> resources;
+        Set<HouseResource> areaSet;
+        Set<HouseResource> subwaySet;
+        Set<HouseResource> rentSet;
+        Set<HouseResource> doorModelSet;
+        Set<HouseResource> roomTypeSet;
+        Set<HouseResource> featureSet;
+        Set<HouseResource> retSet = new HashSet<>();
+        List<Set<HouseResource>> listSets = new ArrayList<>();
+
+        if (!area.equals(UN_LIMITED)) {
+            if (!areaStand.equals(UN_LIMITED)) {
+                area += area + "," + areaStand;
+            }
+            resources = houseResourceMapper.findLikeAreaTagBySearchTextAndCity(area, 0, city);
+            areaSet = new HashSet<>(resources);
+            listSets.add(areaSet);
+        }
+        if (!subway.equals(UN_LIMITED)){
+            if (!subwayStand.equals(UN_LIMITED)) {
+                subway += subway + "," + subwayStand;
+            }
+            resources = houseResourceMapper.findLikeSubwayBySearchTextAndCity(subway, 0, city);
+            subwaySet = new HashSet<>(resources);
+            listSets.add(subwaySet);
+        }
+
+        if(!rent.equals(UN_LIMITED)){
+            String[] rents = rent.split("-");
+            resources = houseResourceMapper.findByLowAndHighPriceAndCity(Integer.parseInt(rents[0]), Integer.parseInt(rents[1]), 0, city);
+            rentSet = new HashSet<>(resources);
+            listSets.add(rentSet);
+        }
+
+        if(!doorModel.equals(UN_LIMITED)){
+            resources = houseResourceMapper.findByDoorModelAndCity(doorModel, 0, city);
+            doorModelSet = new HashSet<>(resources);
+            listSets.add(doorModelSet);
+        }
+
+        if(!roomType.equals(UN_LIMITED)){
+            if (roomType.equals(ENTIRE_TENANCY)) {
+                resources = houseResourceMapper.findByEntireRoomTypeAndCity(roomType, 0, city);
+            } else {
+                resources = houseResourceMapper.findByRoomTypeAndCity(ENTIRE_TENANCY, 0, city);
+            }
+            roomTypeSet = new HashSet<>(resources);
+            listSets.add(roomTypeSet);
+        }
+
+        if(!feature.equals(UN_LIMITED)){
+            if (feature.equals(HAS_LIFT)) {
+                resources = houseResourceMapper.findByLiftTypeAndCity(1, 0, city);
+            } else if (feature.equals(NEAR_SUBWAY)){
+                resources = houseResourceMapper.findIsNearSubwayByCity(StringUtil.BLANK, 0, city);
+            } else {
+                resources = houseResourceMapper.findLikeFacilityBySearchTextAndCity(feature, 0, city);
+            }
+            featureSet = new HashSet<>(resources);
+            listSets.add(featureSet);
+        }
+        for(int i=0;i<listSets.size();i++){
+            if(i == 0){
+                retSet.addAll(listSets.get(i));
+            } else {
+                retSet.retainAll(listSets.get(i));
+            }
+        }
+
+        List<HouseResource> retData = handleHouseResource(new ArrayList<>(retSet));
+        return retData;
+    }
 }

@@ -26,6 +26,8 @@ public enum CodeType {
     UPDATE_CERT_SUCCESS(110, "修改证件信息成功"),
     CHANGE_PASSWORD_SUCCESS(111, "修改密码成功"),
     CHANGE_USER_INFO_SUCCESS(112, "更新用户信息成功"),
+    ORDER_ROOM_EXIST(113, "已处于约看中，请不要重复约看"),
+
     ;
 
     private int code;

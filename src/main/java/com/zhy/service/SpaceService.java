@@ -106,6 +106,7 @@ public class SpaceService {
         String allocation = StringUtil.listToString((ArrayList) hashMap.get("allocations"));
         String areaTag = StringUtil.listToString((ArrayList) hashMap.get("areaTags"));
         String facility = StringUtil.listToString((ArrayList) hashMap.get("facilities"));
+        String subway = StringUtil.listToString((ArrayList) hashMap.get("subway"));
 
         //处理房间照片
         ArrayList roomPics = (ArrayList) hashMap.get("roomPics");
@@ -125,6 +126,7 @@ public class SpaceService {
         houseResource.setAllocation(allocation);
         houseResource.setAreaTag(areaTag);
         houseResource.setFacility(facility);
+        houseResource.setSubway(subway);
         houseResource.setRoomPic(roomPic.toString());
         String communityIdStr = landlordMapper.findCommunityById(landlordId);
         houseResource.setHouseCity(communityMapper.findHouseCityById(Integer.parseInt(communityIdStr)));
