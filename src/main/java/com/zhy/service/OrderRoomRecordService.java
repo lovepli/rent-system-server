@@ -8,6 +8,7 @@ import com.zhy.mapper.UserMapper;
 import com.zhy.model.OrderRoomRecord;
 import com.zhy.utils.DataMap;
 import com.zhy.utils.StringUtil;
+import com.zhy.utils.TimeUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -43,6 +44,10 @@ public class OrderRoomRecordService {
             String roomArea = houseResourceMapper.findHouseResourcesByRoomId(orderRoomRecord.getRoomId()).getAreaTag();
             List<String> roomAreas = StringUtil.StringToList(roomArea);
             orderRoomRecord.setRoomArea(roomAreas.get(0));
+
+            TimeUtil timeUtil = new TimeUtil();
+            String orderSerial = "rj" + timeUtil.getLongTime();
+            orderRoomRecord.setOrderSerial(orderSerial);
 
             orderRoomRecordMapper.save(orderRoomRecord);
         } else {

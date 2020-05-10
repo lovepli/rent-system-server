@@ -22,4 +22,6 @@ public class Steward {
 
     private String portrait;
 
+    private String city;
+
 }

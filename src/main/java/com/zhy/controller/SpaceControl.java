@@ -8,9 +8,7 @@ import com.zhy.utils.DataMap;
 import com.zhy.utils.JsonResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import sun.net.idn.Punycode;
 
 import java.util.HashMap;
@@ -26,13 +24,23 @@ public class SpaceControl {
     @Autowired
     private SpaceService spaceService;
 
-    @PostMapping("/getSpaceInfo")
+    @PostMapping("/getLandlordInfo")
     @PermissionCheck(value = "ROLE_USER")
-    public String getSpaceInfo() {
+    public String getLandlordInfo() {
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         String phone = user.getPhone();
 
-        DataMap dataMap = spaceService.getSpaceInfo(phone);
+        DataMap dataMap = spaceService.getLandlordInfo(phone);
+        return JsonResult.build(dataMap).toJSON();
+    }
+
+    @PostMapping("/getCollectInfo")
+    @PermissionCheck(value = "ROLE_USER")
+    public String getCollectInfo() {
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String phone = user.getPhone();
+
+        DataMap dataMap = spaceService.getCollectInfo(phone);
         return JsonResult.build(dataMap).toJSON();
     }
 
@@ -64,4 +72,71 @@ public class SpaceControl {
         return JsonResult.build(dataMap).toJSON();
     }
 
+    @GetMapping("/deleteCollectRoom")
+    @PermissionCheck(value = "ROLE_USER")
+    public String deleteCollectRoom(@RequestParam("roomId") int roomId) {
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String phone = user.getPhone();
+
+        DataMap dataMap = spaceService.deleteCollectRoom(roomId, phone);
+        return JsonResult.build(dataMap).toJSON();
+    }
+
+    @PostMapping("/getOrderInfo")
+    @PermissionCheck(value = "ROLE_USER")
+    public String getOrderInfo() {
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String phone = user.getPhone();
+
+        DataMap dataMap = spaceService.getOrderInfo(phone);
+        return JsonResult.build(dataMap).toJSON();
+    }
+
+    @GetMapping("/deleteOrder")
+    @PermissionCheck(value = "ROLE_USER")
+    public String deleteOrder(@RequestParam("orderSerial") String orderSerial) {
+
+        DataMap dataMap = spaceService.deleteOrder(orderSerial);
+        return JsonResult.build(dataMap).toJSON();
+    }
+
+    @GetMapping("/getHomeInfo")
+    @PermissionCheck(value = "ROLE_USER")
+    public String getHomeInfo() {
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String phone = user.getPhone();
+
+        DataMap dataMap = spaceService.getHomeInfo(phone);
+        return JsonResult.build(dataMap).toJSON();
+    }
+
+    @PostMapping("/getFacilityInfo")
+    @PermissionCheck(value = "ROLE_USER")
+    public String getFacilityInfo() {
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String phone = user.getPhone();
+
+        DataMap dataMap = spaceService.getFacilityInfo(phone);
+        return JsonResult.build(dataMap).toJSON();
+    }
+
+    @PostMapping("/addFacility")
+    @PermissionCheck(value = "ROLE_USER")
+    public String addFacility(@RequestBody HashMap hashMap) {
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String phone = user.getPhone();
+
+        DataMap dataMap = spaceService.addFacility(hashMap, phone);
+        return JsonResult.build(dataMap).toJSON();
+    }
+
+    @PostMapping("/repairFacility")
+    @PermissionCheck(value = "ROLE_USER")
+    public String repairFacility(@RequestBody HashMap hashMap) {
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String phone = user.getPhone();
+
+        DataMap dataMap = spaceService.repairFacility(hashMap, phone);
+        return JsonResult.build(dataMap).toJSON();
+    }
 }

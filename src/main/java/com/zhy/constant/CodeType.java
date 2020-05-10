@@ -27,7 +27,8 @@ public enum CodeType {
     CHANGE_PASSWORD_SUCCESS(111, "修改密码成功"),
     CHANGE_USER_INFO_SUCCESS(112, "更新用户信息成功"),
     ORDER_ROOM_EXIST(113, "已处于约看中，请不要重复约看"),
-
+    COLLECT_ROOM_EXIST(114, "已收藏该房间"),
+    FACILITY_HAS_REPAIRED(115, "该设备已处于报修中"),
     ;
 
     private int code;

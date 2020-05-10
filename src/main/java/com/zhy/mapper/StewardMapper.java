@@ -13,7 +13,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface StewardMapper {
 
-    @Insert("insert into steward(name, phone, management_area, portrait) values(#{name}, #{phone}, #{ManagementArea}, #{portrait})")
+    @Insert("insert into steward(name, phone, management_area, portrait, city) values(#{name}, #{phone}, #{ManagementArea}, #{portrait}, #{city})")
     void save(Steward steward);
 
     @Select("select * from steward where management_area=#{area}")

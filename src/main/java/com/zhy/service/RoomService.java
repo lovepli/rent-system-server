@@ -2,12 +2,13 @@ package com.zhy.service;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.zhy.aspect.PrincipalAspect;
 import com.zhy.constant.CodeType;
-import com.zhy.mapper.CommunityMapper;
-import com.zhy.mapper.HouseResourceMapper;
-import com.zhy.mapper.LandlordMapper;
+import com.zhy.mapper.*;
+import com.zhy.model.CollectRoom;
 import com.zhy.model.Community;
 import com.zhy.model.HouseResource;
+import com.zhy.model.User;
 import com.zhy.utils.DataMap;
 import com.zhy.utils.SortUtil;
 import com.zhy.utils.StringUtil;
@@ -15,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import javax.xml.crypto.Data;
 import java.lang.reflect.Type;
 import java.util.*;
 
@@ -37,8 +39,13 @@ public class RoomService {
     private LandlordMapper landlordMapper;
     @Autowired
     private HouseResourceMapper houseResourceMapper;
+    @Autowired
+    private UserMapper userMapper;
+    @Autowired
+    private CollectRoomMapper collectRoomMapper;
 
-    public DataMap getRoomInfo(HashMap hashMap){
+    public DataMap getRoomInfo(HashMap hashMap, Object obj){
+
         int roomId = Integer.parseInt(hashMap.get("roomId").toString());
         HouseResource houseResource = houseResourceMapper.findHouseResourcesByRoomId(roomId);
 
@@ -117,6 +124,9 @@ public class RoomService {
         }
         houseInfo.put("communityInfo", communityInfo);
 
+        String collectState = getCollectState(obj, roomId);
+        houseInfo.put("collectState", collectState);
+
         return DataMap.success().setData(houseInfo);
     }
 
@@ -165,6 +175,32 @@ public class RoomService {
 
         List<HouseResource> retData = getRoomInfoByCondition(hashMap);
         return DataMap.success().setData(retData);
+    }
+
+    public DataMap collectRoom(HashMap hashMap, String phone){
+
+        int collectUserId = userMapper.findIdByPhone(phone);
+        CollectRoom collectRoom = JSONObject.parseObject(JSONObject.toJSONString(hashMap), CollectRoom.class);
+        collectRoom.setCollectUserId(collectUserId);
+
+        int collectRoomId = collectRoomMapper.findIsExistByPhone(collectRoom.getRoomId(), collectUserId);
+
+        if (collectRoomId != 0) {
+            return DataMap.success(CodeType.COLLECT_ROOM_EXIST);
+        }
+
+        collectRoomMapper.save(collectRoom);
+
+        return DataMap.success();
+    }
+
+    public DataMap getCollectState(HashMap hashMap, Object obj){
+        System.out.println("roomId:" + hashMap);
+        int roomId = Integer.parseInt(hashMap.get("roomId").toString());
+
+        String collectState = getCollectState(obj, roomId);
+
+        return DataMap.success().setData(collectState);
     }
 
     private List<HouseResource> handleHouseResource(List<HouseResource> resources) {
@@ -283,5 +319,20 @@ public class RoomService {
 
         List<HouseResource> retData = handleHouseResource(new ArrayList<>(retSet));
         return retData;
+    }
+
+    private String getCollectState(Object obj, int roomId){
+        if (obj.equals(PrincipalAspect.ANONYMOUS_USER)) {
+            return "收藏";
+        } else {
+            User user = (User) obj;
+            int collectUserId = userMapper.findIdByPhone(user.getPhone());
+            int collectRoomId = collectRoomMapper.findIsExistByPhone(roomId, collectUserId);
+            if (collectRoomId == 0) {
+                return "收藏";
+            }
+        }
+
+        return "已收藏";
     }
 }

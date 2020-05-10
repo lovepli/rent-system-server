@@ -14,9 +14,9 @@ public class OrderRoomRecord {
 
     private int id;
 
-    private String orderTime;
+    private String orderSerial;
 
-    private String orderPhone;
+    private String orderTime;
 
     private int roomId;
 
@@ -25,12 +25,4 @@ public class OrderRoomRecord {
     private String roomArea;
 
     private int state = 0;
-
-    public OrderRoomRecord(String orderTime, String orderPhone, int roomId, int orderUserId, String roomArea) {
-        this.orderTime = orderTime;
-        this.orderPhone = orderPhone;
-        this.roomId = roomId;
-        this.orderUserId = orderUserId;
-        this.roomArea = roomArea;
-    }
 }

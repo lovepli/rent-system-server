@@ -4,6 +4,7 @@ import com.zhy.service.StewardService;
 import com.zhy.utils.DataMap;
 import com.zhy.utils.JsonResult;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -23,7 +24,9 @@ public class StewardControl {
 
     @PostMapping("/getStewardInfo")
     public String getStewardInfo(@RequestBody HashMap hashMap){
-        DataMap dataMap =  stewardService.getStewardInfo(hashMap);
+        Object obj = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        DataMap dataMap =  stewardService.getStewardInfo(hashMap, obj);
         return JsonResult.build(dataMap).toJSON();
     }
 
