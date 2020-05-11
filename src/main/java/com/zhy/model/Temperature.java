@@ -1,6 +1,7 @@
 package com.zhy.model;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * @author: zhangocean
@@ -8,6 +9,7 @@ import lombok.Data;
  * Describe:
  */
 @Data
+@NoArgsConstructor
 public class Temperature {
 
     private int id;
@@ -20,4 +22,9 @@ public class Temperature {
 
     private int homeUserId;
 
+    public Temperature(int temperature, int humidity, int roomId) {
+        this.temperature = temperature;
+        this.humidity = humidity;
+        this.roomId = roomId;
+    }
 }

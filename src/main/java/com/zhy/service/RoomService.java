@@ -195,7 +195,10 @@ public class RoomService {
     }
 
     public DataMap getCollectState(HashMap hashMap, Object obj){
-        System.out.println("roomId:" + hashMap);
+
+        if (hashMap.get("roomId") == null) {
+            return DataMap.success().setData("收藏");
+        }
         int roomId = Integer.parseInt(hashMap.get("roomId").toString());
 
         String collectState = getCollectState(obj, roomId);

@@ -104,9 +104,9 @@ public class SpaceControl {
     @PermissionCheck(value = "ROLE_USER")
     public String getHomeInfo() {
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        String phone = user.getPhone();
+        int userId = user.getId();
 
-        DataMap dataMap = spaceService.getHomeInfo(phone);
+        DataMap dataMap = spaceService.getHomeInfo(userId);
         return JsonResult.build(dataMap).toJSON();
     }
 
@@ -114,9 +114,9 @@ public class SpaceControl {
     @PermissionCheck(value = "ROLE_USER")
     public String getFacilityInfo() {
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        String phone = user.getPhone();
+        int userId = user.getId();
 
-        DataMap dataMap = spaceService.getFacilityInfo(phone);
+        DataMap dataMap = spaceService.getFacilityInfo(userId);
         return JsonResult.build(dataMap).toJSON();
     }
 
@@ -124,9 +124,9 @@ public class SpaceControl {
     @PermissionCheck(value = "ROLE_USER")
     public String addFacility(@RequestBody HashMap hashMap) {
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        String phone = user.getPhone();
+        int userId = user.getId();
 
-        DataMap dataMap = spaceService.addFacility(hashMap, phone);
+        DataMap dataMap = spaceService.addFacility(hashMap, userId);
         return JsonResult.build(dataMap).toJSON();
     }
 
@@ -134,9 +134,35 @@ public class SpaceControl {
     @PermissionCheck(value = "ROLE_USER")
     public String repairFacility(@RequestBody HashMap hashMap) {
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        String phone = user.getPhone();
+        int userId = user.getId();
 
-        DataMap dataMap = spaceService.repairFacility(hashMap, phone);
+        DataMap dataMap = spaceService.repairFacility(hashMap, userId);
+        return JsonResult.build(dataMap).toJSON();
+    }
+
+    @PostMapping("/payOrderClick")
+    @PermissionCheck(value = "ROLE_USER")
+    public String payOrderClick(@RequestBody HashMap hashMap) {
+
+        DataMap dataMap = spaceService.payOrderClick(hashMap);
+        return JsonResult.build(dataMap).toJSON();
+    }
+
+    @PostMapping("/getContractInfo")
+    @PermissionCheck(value = "ROLE_USER")
+    public String getContractInfo() {
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        int userId = user.getId();
+
+        DataMap dataMap = spaceService.getContractInfo(userId);
+        return JsonResult.build(dataMap).toJSON();
+    }
+
+    @PostMapping("/payBill")
+    @PermissionCheck(value = "ROLE_USER")
+    public String payBill(@RequestBody HashMap hashMap) {
+
+        DataMap dataMap = spaceService.payBill(hashMap);
         return JsonResult.build(dataMap).toJSON();
     }
 }

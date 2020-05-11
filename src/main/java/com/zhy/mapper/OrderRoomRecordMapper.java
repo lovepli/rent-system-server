@@ -20,7 +20,7 @@ public interface OrderRoomRecordMapper {
     void save(OrderRoomRecord orderRoomRecord);
 
     @Select("select IFNULL(max(id),0) from order_room_record where room_id=#{roomId} and order_user_id=#{orderUserId}")
-    int findIsExistByPhone(int roomId, int orderUserId);
+    int findIsExistByRoomIdAndOrderUserId(int roomId, int orderUserId);
 
     @Select("select * from order_room_record where order_user_id=#{orderUserId}")
     @Results(id = "orderRoomRecordMap", value = {
@@ -34,4 +34,8 @@ public interface OrderRoomRecordMapper {
 
     @Delete("delete from order_room_record where order_serial=#{orderSerial}")
     void deleteOrderByOrderSerial(String orderSerial);
+
+    @Select("select room_id,order_user_id from order_room_record where order_serial=#{orderSerial}")
+    @ResultMap("orderRoomRecordMap")
+    OrderRoomRecord findByOrderSerial(String orderSerial);
 }

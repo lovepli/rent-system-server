@@ -13,7 +13,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface TemperatureMapper {
 
-    @Insert("insert into temperature(temperature, humidity, room_id, home_user_id) values(#{temperature}, #{humidity}, #{roomId}, #{homeUserId})")
+    @Insert("insert into temperature(temperature, humidity, room_id) values(#{temperature}, #{humidity}, #{roomId})")
     void save(Temperature temperature);
 
     @Select("select * from temperature where home_user_id=#{homeUserId}")
@@ -22,5 +22,8 @@ public interface TemperatureMapper {
             @Result(property = "homeUserId", column = "home_user_id")
     })
     Temperature findByHomeUserId(int homeUserId);
+
+    @Update("update temperature set home_user_id=#{homeUserId} where room_id=#{roomId}")
+    void updateHomeUserIdByRoomId(int homeUserId, int roomId);
 
 }

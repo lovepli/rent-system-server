@@ -35,6 +35,9 @@ public interface HouseResourceMapper {
     })
     List<HouseResource> findHouseResourcesByLandlordId(int landlordId);
 
+    @Select("select area_tag from house_resource where id=#{roomId}")
+    String findAreaTagByRoomId(int roomId);
+
     @Select("select * from house_resource where id=#{roomId}")
     @ResultMap("houseResourceMap")
     HouseResource findHouseResourcesByRoomId(int roomId);
@@ -82,4 +85,7 @@ public interface HouseResourceMapper {
     @Select("select * from house_resource where house_city=#{city} and rent_state=#{rentState} and subway<>#{subway}")
     @ResultMap("houseResourceMap")
     List<HouseResource> findIsNearSubwayByCity(String subway, int rentState, String city);
+
+    @Update("update house_resource set rent_state=#{rentState} where id=#{roomId}")
+    void updateRentStateByRoomId(int roomId, int rentState);
 }

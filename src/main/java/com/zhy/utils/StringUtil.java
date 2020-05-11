@@ -14,6 +14,8 @@ public class StringUtil {
 
     public static final String ANONYMOUS_USER = "anonymousUser";
 
+    public static final long ONT_MONTH_SECONDS = 60 * 60 * 24 * 30;
+
     /**
      * 字符串转换成字符串数组
      * @param str 字符串

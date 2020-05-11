@@ -5,6 +5,7 @@ import com.zhy.constant.CodeType;
 import com.zhy.mapper.HouseResourceMapper;
 import com.zhy.mapper.OrderRoomRecordMapper;
 import com.zhy.mapper.UserMapper;
+import com.zhy.model.HouseResource;
 import com.zhy.model.OrderRoomRecord;
 import com.zhy.utils.DataMap;
 import com.zhy.utils.StringUtil;
@@ -35,13 +36,20 @@ public class OrderRoomRecordService {
 
         OrderRoomRecord orderRoomRecord = JSONObject.parseObject(JSONObject.toJSONString(hashMap), OrderRoomRecord.class);
 
+        HouseResource houseResource = houseResourceMapper.findHouseResourcesByRoomId(orderRoomRecord.getRoomId());
+
+        int rentState = houseResource.getRentState();
+        if(rentState == 1){
+            return DataMap.fail(CodeType.ROOM_HAS_RENT);
+        }
+
         int orderUserId = userMapper.findIdByPhone(phone);
 
         orderRoomRecord.setOrderUserId(orderUserId);
-        int isExist = orderRoomRecordMapper.findIsExistByPhone(orderRoomRecord.getRoomId(), orderUserId);
+        int isExist = orderRoomRecordMapper.findIsExistByRoomIdAndOrderUserId(orderRoomRecord.getRoomId(), orderUserId);
 
         if (isExist == 0) {
-            String roomArea = houseResourceMapper.findHouseResourcesByRoomId(orderRoomRecord.getRoomId()).getAreaTag();
+            String roomArea = houseResource.getAreaTag();
             List<String> roomAreas = StringUtil.StringToList(roomArea);
             orderRoomRecord.setRoomArea(roomAreas.get(0));
 

@@ -42,6 +42,7 @@ public class HouseResource {
 
     private String roomPic;
 
+    //出租中
     private int rentState = 0;
 
     private String houseCity;

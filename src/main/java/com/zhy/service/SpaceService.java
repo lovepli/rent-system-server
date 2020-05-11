@@ -10,6 +10,7 @@ import com.zhy.utils.TimeUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -40,6 +41,10 @@ public class SpaceService {
     private TemperatureMapper temperatureMapper;
     @Autowired
     private FacilityInfoMapper facilityInfoMapper;
+    @Autowired
+    private ContractMapper contractMapper;
+    @Autowired
+    private BillRecordMapper billRecordMapper;
 
     public DataMap getLandlordInfo(String phone) {
 
@@ -165,6 +170,9 @@ public class SpaceService {
 
         houseResourceMapper.save(houseResource);
 
+        Temperature temperature = new Temperature(0, 0, houseResource.getId());
+        temperatureMapper.save(temperature);
+
         HashMap<String, Object> houseMap = new HashMap<>();
         houseMap.put("id", houseResource.getId());
         houseMap.put("houseName", areaTag.replace(",", " ") + " " + houseResource.getHouseName());
@@ -271,21 +279,25 @@ public class SpaceService {
         return DataMap.success();
     }
 
-    public DataMap getHomeInfo(String phone){
-        int homeUserId = userMapper.findIdByPhone(phone);
+    public DataMap getHomeInfo(int userId){
 
-        Temperature temperature = temperatureMapper.findByHomeUserId(homeUserId);
+        Temperature temperature = temperatureMapper.findByHomeUserId(userId);
+        if (temperature == null) {
+            return DataMap.fail(CodeType.NOT_RENT_ROOM);
+        }
         return DataMap.success().setData(temperature);
     }
 
-    public DataMap getFacilityInfo(String phone){
-        int userId = userMapper.findIdByPhone(phone);
-        String facilityRoom = "西城区,玫瑰花城";
-        //TODO 通过合同获得报修房间
+    public DataMap getFacilityInfo(int userId){
+        int roomId = contractMapper.findRoomIdByUserIdAndContractState(userId, 0);
+        List<HashMap<String, Object>> retList = new ArrayList<>();
+        if (roomId == 0) {
+            return DataMap.fail(CodeType.NOT_RENT_ROOM);
+        }
+        String facilityRoom = houseResourceMapper.findAreaTagByRoomId(roomId);
 
         List<FacilityInfo> facilityInfoList = facilityInfoMapper.findByFacilityRoom(facilityRoom);
 
-        List<HashMap<String, Object>> retList = new ArrayList<>();
         HashMap<String, Object> retMap;
         for(int i=0;i<facilityInfoList.size();i++){
             retMap = new HashMap<>();
@@ -305,10 +317,9 @@ public class SpaceService {
         return DataMap.success().setData(retList);
     }
 
-    public DataMap addFacility(HashMap hashMap, String phone){
-        int userId = userMapper.findIdByPhone(phone);
-        //TODO 通过合同获得报修房间
-        String facilityRoom = "西城区,玫瑰花城";
+    public DataMap addFacility(HashMap hashMap, int userId){
+        int roomId = contractMapper.findRoomIdByUserIdAndContractState(userId, 0);
+        String facilityRoom = houseResourceMapper.findAreaTagByRoomId(roomId);
 
         TimeUtil timeUtil = new TimeUtil();
         String facilitySerial = "rj" + timeUtil.getLongTime();
@@ -322,10 +333,9 @@ public class SpaceService {
         return DataMap.success().setData(facilitySerial);
     }
 
-    public DataMap repairFacility(HashMap hashMap, String phone){
-        int userId = userMapper.findIdByPhone(phone);
-        //TODO 通过合同获得报修房间
-        String facilityRoom = "西城区,玫瑰花城";
+    public DataMap repairFacility(HashMap hashMap, int userId){
+        int roomId = contractMapper.findRoomIdByUserIdAndContractState(userId, 0);
+        String facilityRoom = houseResourceMapper.findAreaTagByRoomId(roomId);
 
         FacilityInfo facilityInfo = JSONObject.parseObject(JSONObject.toJSONString(hashMap), FacilityInfo.class);
         facilityInfo.setFacilityRoom(facilityRoom);
@@ -340,6 +350,150 @@ public class SpaceService {
         facilityInfo.setFacilityState(0);
 
         facilityInfoMapper.updateByFacilitySerialAndFacilityRoom(facilityInfo);
+
+        return DataMap.success();
+    }
+
+    public DataMap payOrderClick(HashMap hashMap){
+        String orderSerial = (String) hashMap.get("orderSerial");
+        int payWay = Integer.parseInt(hashMap.get("payWay").toString());
+
+        OrderRoomRecord orr = orderRoomRecordMapper.findByOrderSerial(orderSerial);
+
+        int roomId = orr.getRoomId();
+        int orderUserId = orr.getOrderUserId();
+
+        int contractNotOutDue = contractMapper.findContractNotOverdueByUserIdAndContractState(orderUserId, 0);
+
+        if (contractNotOutDue != 0) {
+            return DataMap.fail(CodeType.CONTRACT_NOT_OUT_DUE);
+        }
+
+        HouseResource houseResource = houseResourceMapper.findHouseResourcesByRoomId(roomId);
+
+        int rent = houseResource.getRent();
+        int consumeMoney = rent;
+
+        TimeUtil timeUtil = new TimeUtil();
+        long contractRenewTime = timeUtil.getLongTime();
+
+        if (payWay == 2) {
+            consumeMoney *= 3;
+            contractRenewTime += StringUtil.ONT_MONTH_SECONDS * 3;
+        } else if (payWay == 3) {
+            consumeMoney *= 6;
+            contractRenewTime += StringUtil.ONT_MONTH_SECONDS * 6;
+        } else if (payWay == 4) {
+            consumeMoney *= 12;
+            contractRenewTime += StringUtil.ONT_MONTH_SECONDS *12;
+        } else {
+            contractRenewTime += StringUtil.ONT_MONTH_SECONDS;
+        }
+
+        List<String> areaTags = StringUtil.StringToList(houseResource.getAreaTag());
+        String city = "(" + houseResource.getHouseCity() + ") -- ";
+        StringBuilder contractName = new StringBuilder(city);
+        for(String s : areaTags){
+            contractName.append(s).append(" ");
+        }
+        contractName.append("朝").append(houseResource.getToward()).append(" ");
+        if (!"整租".equals(houseResource.getHouseName())) {
+            contractName.append(houseResource.getHouseName());
+        }
+
+        String payTime = timeUtil.getFormatDateForThree();
+
+        Contract contract = new Contract(orderSerial,contractName.toString(),payWay,rent,payTime,contractRenewTime,roomId,orderUserId);
+
+        contractMapper.save(contract);
+
+        houseResourceMapper.updateRentStateByRoomId(roomId, 1);
+
+        orderRoomRecordMapper.deleteOrderByOrderSerial(orderSerial);
+
+        BillRecord billRecord = new BillRecord();
+        billRecord.setBillSerial("ZD" + timeUtil.getLongTime());
+        billRecord.setContractSerial(orderSerial);
+        BigDecimal bigDecimal = new BigDecimal(consumeMoney);
+        billRecord.setConsumeMoney(bigDecimal);
+        billRecord.setPaymentState(1);
+        String time = timeUtil.getFormatDateForThree();
+        String billDate = time;
+        billRecord.setBillDate(billDate);
+        billRecord.setConsumeProject("房租缴费"+time.replace("-",""));
+        billRecordMapper.save(billRecord);
+
+        temperatureMapper.updateHomeUserIdByRoomId(orderUserId, roomId);
+
+        return DataMap.success();
+    }
+
+    public DataMap getContractInfo(int userId){
+
+        List<Contract> contracts = contractMapper.findByUserId(userId);
+
+        List<HashMap<String, Object>> retList = new ArrayList<>();
+        HashMap<String, Object> retMap;
+
+        int count = 1;
+        for(Contract contract : contracts){
+            retMap = new HashMap<>();
+
+            retMap.put("contractName", "合同" + count + contract.getContractName());
+            retMap.put("contractSerial", contract.getContractSerial());
+            if (contract.getPayWay() == 1) {
+                retMap.put("payWay", "月付");
+            } else if (contract.getPayWay() == 2) {
+                retMap.put("payWay", "季付");
+            } else if (contract.getPayWay() == 3) {
+                retMap.put("payWay", "半年付");
+            } else {
+                retMap.put("payWay", "年付");
+            }
+            retMap.put("rent", contract.getRent());
+            retMap.put("contractState", contract.getContractState());
+
+            List<BillRecord> billRecords;
+            List<HashMap<String, Object>> billRecordList = new ArrayList<>();
+            billRecords = billRecordMapper.findByContractSerial(contract.getContractSerial());
+            HashMap<String, Object> billRecordMap;
+            int billCount = 1;
+            for (BillRecord billRecord : billRecords) {
+                billRecordMap = new HashMap<>();
+                billRecordMap.put("serialNumber", billCount);
+                billRecordMap.put("billSerial", billRecord.getBillSerial());
+                billRecordMap.put("billDate", billRecord.getBillDate());
+                billRecordMap.put("consumeProject", billRecord.getConsumeProject());
+                billRecordMap.put("consumeMoney", billRecord.getConsumeMoney()+"元");
+                if (billRecord.getPaymentState() == 0) {
+                    billRecordMap.put("paymentState", "未支付");
+                } else {
+                    billRecordMap.put("paymentState", "已支付");
+                }
+                billCount++;
+
+                billRecordList.add(billRecordMap);
+            }
+
+            retMap.put("billRecords", billRecordList);
+
+            count++;
+
+            retList.add(retMap);
+        }
+
+        return DataMap.success().setData(retList);
+    }
+
+    public DataMap payBill(HashMap hashMap){
+        String billSerial = (String) hashMap.get("billSerial");
+
+        BillRecord billRecord = billRecordMapper.findConsumeMoneyByBillSerial(billSerial);
+        if (billRecord.getPaymentState() == 1) {
+            return DataMap.fail(CodeType.BILL_HAS_PAY);
+        }
+        BigDecimal consumeMoney = billRecord.getConsumeMoney();
+        billRecordMapper.updatePaymentStateByBillSerial(billSerial, 1);
 
         return DataMap.success();
     }

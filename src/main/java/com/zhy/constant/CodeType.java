@@ -29,6 +29,10 @@ public enum CodeType {
     ORDER_ROOM_EXIST(113, "已处于约看中，请不要重复约看"),
     COLLECT_ROOM_EXIST(114, "已收藏该房间"),
     FACILITY_HAS_REPAIRED(115, "该设备已处于报修中"),
+    CONTRACT_NOT_OUT_DUE(116, "已有签约中的合同，无法再次签约"),
+    ROOM_HAS_RENT(117, "该房间已被出租"),
+    BILL_HAS_PAY(118, "账单已被支付"),
+    NOT_RENT_ROOM(119, "未签订房间"),
     ;
 
     private int code;
