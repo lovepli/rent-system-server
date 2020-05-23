@@ -16,7 +16,7 @@ import java.util.List;
 @Repository
 public interface UserMapper {
 
-    @Insert("insert into user(phone, username, password, roles) values(#{phone}, #{username}, #{password}, #{roles})")
+    @Insert("insert into user(phone, username, password, roles, head_portrait) values(#{phone}, #{username}, #{password}, #{roles}, #{headPortrait})")
     int save(User user);
 
     @Update("update user set real_name=#{realName},id_number=#{idNumber} where phone=#{phone}")
